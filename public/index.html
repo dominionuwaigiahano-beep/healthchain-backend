@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🩺 HealthChain Demo</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
+    p#status {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+    .section {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 0;
+      color: #2980b9;
+    }
+    input, button {
+      margin: 5px 0;
+      padding: 8px;
+      font-size: 14px;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #2980b9;
+      color: white;
+      transition: 0.3s;
+    }
+    button:hover { background: #1c6699; }
+    pre {
+      background: #f4f6f8;
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #ecf0f1;
+    }
+    .action-btn {
+      padding: 5px 10px;
+      font-size: 13px;
+      background: #27ae60;
+    }
+    .action-btn:hover { background: #1e874b; }
+  </style>
+</head>
+<body>
+  <h1>🩺 HealthChain Demo</h1>
+  <p id="status">⏳ Checking backend...</p>
+
+  <!-- Section 1: Consent -->
+  <div class="section">
+    <h2>1. Grant Consent</h2>
+    <input id="gc-patient" placeholder="Patient ID (e.g., pat-1)" value="pat-1"><br>
+    <input id="gc-provider" placeholder="Provider ID (e.g., doc-1)" value="doc-1"><br>
+    <button onclick="grantConsent()">Grant Consent</button>
+    <button onclick="revokeConsent()">Revoke Consent</button>
+    <pre id="gc-out"></pre>
+  </div>
+
+  <!-- Section 2: Upload -->
+  <div class="section">
+    <h2>2. Upload Medical Record</h2>
+    <input id="ur-patient" placeholder="Patient ID" value="pat-1"><br>
+    <input id="ur-provider" placeholder="Provider ID" value="doc-1"><br>
+    <input id="ur-file" type="file"><br>
+    <button onclick="uploadRecord()">Encrypt & Upload</button>
+    <pre id="ur-out"></pre>
+  </div>
+
+  <!-- Section 3: Fetch -->
+  <div class="section">
+    <h2>3. Fetch Records</h2>
+    <input id="fr-patient" placeholder="Patient ID" value="pat-1"><br>
+    <input id="fr-provider" placeholder="Provider ID" value="doc-1"><br>
+    <button onclick="fetchRecords()">Fetch Records</button>
+    <div id="records-table"></div>
+  </div>
+
+  <!-- Section 4: Audit -->
+  <div class="section">
+    <h2>4. Audit Logs</h2>
+    <button onclick="fetchAudit()">Show Audit Logs</button>
+    <pre id="al-out"></pre>
+  </div>
+
+  <!-- Section 5: Ledger -->
+  <div class="section">
+    <h2>5. Ledger (Blockchain Log)</h2>
+    <button onclick="fetchLedger()">Show Ledger</button>
+    <pre id="ledger-out"></pre>
+  </div>
+
+  <script>
+    const API = "http://localhost:4000/api";
+
+    async function checkStatus() {
+      try {
+        const res = await fetch(API + "/status");
+        const data = await res.json();
+        document.getElementById("status").textContent =
+          data.msg + " ✅ (" + data.now + ")";
+      } catch {
+        document.getElementById("status").textContent = "❌ Backend not reachable";
+      }
+    }
+
+    async function grantConsent() {
+      const body = {
+        patientId: document.getElementById("gc-patient").value,
+        providerId: document.getElementById("gc-provider").value
+      };
+      const res = await fetch(API + "/consent/grant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      document.getElementById("gc-out").textContent =
+        JSON.stringify(await res.json(), null, 2);
+    }
+
+    async function revokeConsent() {
+      const body = {
+        patientId: document.getElementById("gc-patient").value,
+        providerId: document.getElementById("gc-provider").value
+      };
+      const res = await fetch(API + "/consent/revoke", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      document.getElementById("gc-out").textContent =
+        JSON.stringify(await res.json(), null, 2);
+    }
+
+    async function uploadRecord() {
+      const formData = new FormData();
+      formData.append("patientId", document.getElementById("ur-patient").value);
+      formData.append("providerId", document.getElementById("ur-provider").value);
+      formData.append("file", document.getElementById("ur-file").files[0]);
+
+      const res = await fetch(API + "/add-record", {
+        method: "POST",
+        body: formData
+      });
+      document.getElementById("ur-out").textContent =
+        JSON.stringify(await res.json(), null, 2);
+    }
+
+    async function fetchRecords() {
+      const pid = document.getElementById("fr-patient").value;
+      const prov = document.getElementById("fr-provider").value;
+      const res = await fetch(`${API}/records/${pid}/${prov}`);
+      const data = await res.json();
+      if (!data.ok) {
+        document.getElementById("records-table").innerHTML =
+          `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        return;
+      }
+
+      if (data.records.length === 0) {
+        document.getElementById("records-table").innerHTML = "<p>No records found.</p>";
+        return;
+      }
+
+      let html = "<table><tr><th>Record ID</th><th>Filename</th><th>Date</th><th>Action</th></tr>";
+      data.records.forEach(r => {
+        html += `<tr>
+          <td>${r.recordId}</td>
+          <td>${r.filename}</td>
+          <td>${r.date}</td>
+          <td><button class="action-btn" onclick="downloadRecord('${r.recordId}', '${prov}')">Decrypt & Download</button></td>
+        </tr>`;
+      });
+      html += "</table>";
+      document.getElementById("records-table").innerHTML = html;
+    }
+
+    function downloadRecord(recordId, providerId) {
+      const url = `${API}/decrypt/${recordId}?providerId=${providerId}`;
+      window.open(url, "_blank");
+    }
+
+    async function fetchAudit() {
+      const res = await fetch(API + "/audit");
+      document.getElementById("al-out").textContent =
+        JSON.stringify(await res.json(), null, 2);
+    }
+
+    async function fetchLedger() {
+      const res = await fetch(API + "/ledger");
+      document.getElementById("ledger-out").textContent =
+        JSON.stringify(await res.json(), null, 2);
+    }
+
+    checkStatus();
+  </script>
+</body>
+</html>

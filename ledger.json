@@ -1,0 +1,36 @@
+[
+  {
+    "type": "CONSENT_GRANTED",
+    "patientId": "pat-1",
+    "providerId": "doc-1",
+    "tx": "0x9e29e38f3610dedf64237539",
+    "timestamp": "2025-09-27T14:10:08.682Z"
+  },
+  {
+    "type": "RECORD_ADDED",
+    "recordId": "0xa9540ba31210faad",
+    "tx": "0xf4f27fbcd5c5470f194c8ae8",
+    "timestamp": "2025-09-27T14:10:43.302Z"
+  },
+  {
+    "type": "READ_RECORDS",
+    "patientId": "pat-1",
+    "providerId": "doc-1",
+    "tx": "0xcc15b91aaad0da90800accae",
+    "timestamp": "2025-09-27T14:11:06.138Z"
+  },
+  {
+    "type": "DOWNLOAD_DECRYPT",
+    "recordId": "0xa9540ba31210faad",
+    "tx": "0x0e9c852946a96e7bac0e3671",
+    "actor": "doc-1",
+    "timestamp": "2025-09-27T14:11:27.208Z"
+  },
+  {
+    "type": "CONSENT_GRANTED",
+    "patientId": "pat-1",
+    "providerId": "doc-1",
+    "tx": "0x820574de300b2a3056835fdc",
+    "timestamp": "2025-10-31T10:41:44.195Z"
+  }
+]
